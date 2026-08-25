@@ -1,45 +1,78 @@
 "use client"
 
-import { Blocks, BarChart3, Rabbit, Container, Banknote, SquareArrowOutUpRight, Settings2, LogOut } from 'lucide-react'
+import {
+  LayoutDashboard,
+  FileText,
+  ScanLine,
+  BarChart3,
+  Send,
+  Users,
+  Plug,
+  Settings2,
+  LifeBuoy,
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
+const primary = [
+  { label: "OVERVIEW", icon: LayoutDashboard, href: "/" },
+  { label: "INVOICES", icon: FileText, href: "/invoices" },
+  { label: "AI REVIEW", icon: ScanLine, href: "/review" },
+  { label: "ANALYTICS", icon: BarChart3, href: "/analytics" },
+  { label: "FOLLOW-UPS", icon: Send, href: "/follow-ups" },
+  { label: "VENDORS", icon: Users, href: "/vendors" },
+  { label: "INTEGRATIONS", icon: Plug, href: "/integrations" },
+]
 
 export function Sidebar() {
+  const pathname = usePathname()
   return (
-    <aside className="sticky top-24 h-[calc(100vh-8rem)] md:w-48 lg:w-64 bg-[#0D0D0D] rounded-2xl hidden md:flex flex-col p-8 overflow-y-auto">
-      <nav className="flex flex-col gap-8">
-        <div className="flex items-center gap-4 text-[#E7E7E7] cursor-pointer">
-          <Blocks className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">DASHBOARD</span>
+    <aside className="sticky top-24 hidden h-[calc(100vh-8rem)] w-64 shrink-0 flex-col overflow-y-auto rounded-2xl border border-white/[0.04] bg-[#0D0D0D] p-5 md:flex">
+      <div className="mb-6 px-3">
+        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#5F5F5F]">Workspace</p>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#86efac] text-sm font-bold text-black">FC</div>
+          <div>
+            <p className="text-sm font-medium text-white">Finance Control</p>
+            <p className="text-xs text-[#6F6F6F]">Main workspace</p>
+          </div>
         </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <BarChart3 className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">ANALYTICS</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <Rabbit className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">ARBITRADER</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <Container className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">RESEARCHER</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <Banknote className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">FUNDS</span>
-        </div>
+      </div>
+
+      <nav className="flex flex-col gap-1.5">
+        {primary.map((item) => {
+          const Icon = item.icon
+          const active = pathname === item.href
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                active ? "bg-[#1A1A1A] text-white" : "text-[#777] hover:bg-[#141414] hover:text-[#DDD]"
+              }`}
+            >
+              <Icon className={`h-[18px] w-[18px] ${active ? "text-[#86efac]" : ""}`} />
+              <span className="text-xs font-medium tracking-[0.08em]">{item.label}</span>
+            </Link>
+          )
+        })}
       </nav>
 
-      <div className="mt-auto pt-8 border-t border-[#1F1F1F] flex flex-col gap-8">
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <SquareArrowOutUpRight className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">FINBRO SUPPORT</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <Settings2 className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">SETTINGS</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#919191] hover:text-[#E7E7E7] transition-colors cursor-pointer">
-          <LogOut className="h-6 w-6" />
-          <span className="text-sm font-medium tracking-wide">LOGOUT</span>
+      <div className="mt-auto border-t border-[#202020] pt-4">
+        <Link href="/settings" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[#777] transition hover:bg-[#141414] hover:text-white">
+          <LifeBuoy className="h-[18px] w-[18px]" />
+          <span className="text-xs font-medium tracking-[0.08em]">HELP CENTER</span>
+        </Link>
+        <Link href="/settings" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[#777] transition hover:bg-[#141414] hover:text-white">
+          <Settings2 className="h-[18px] w-[18px]" />
+          <span className="text-xs font-medium tracking-[0.08em]">SETTINGS</span>
+        </Link>
+        <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#121212] p-3">
+          <div className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-orange-400 to-pink-500 text-[10px] font-bold">AM</div>
+          <div className="min-w-0">
+            <p className="truncate text-xs font-medium text-white">Alice Mugisha</p>
+            <p className="truncate text-[10px] text-[#666]">Finance admin</p>
+          </div>
         </div>
       </div>
     </aside>

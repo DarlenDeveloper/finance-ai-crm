@@ -102,7 +102,7 @@ export function PerformanceChart() {
                   return (
                     <div className="bg-[#1A1A1A] border border-[#333] p-2 rounded-lg shadow-xl">
                       <p className="text-white font-medium">
-                        {payload[0].value?.toFixed(2)} USD <span className="text-gray-400 text-sm ml-2">{payload[0].payload.date}</span>
+                        {Number(payload[0].value ?? 0).toFixed(2)} USD <span className="text-gray-400 text-sm ml-2">{payload[0].payload.date}</span>
                       </p>
                     </div>
                   )

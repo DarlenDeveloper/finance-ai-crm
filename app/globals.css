@@ -75,7 +75,7 @@
 }
 
 @theme inline {
-  --font-sans: 'Space Grotesk', sans-serif;
+  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);

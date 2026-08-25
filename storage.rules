@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function membership(workspaceId) {
+      return firestore.get(/databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    }
+    function canReview(workspaceId) {
+      return signedIn()
+        && membership(workspaceId).data.role in ['admin', 'reviewer'];
+    }
+    function supportedType() {
+      return request.resource.contentType in [
+        'application/pdf', 'image/jpeg', 'image/png', 'image/webp'
+      ];
+    }
+
+    match /workspaces/{workspaceId}/invoices/{invoiceId}/source/{fileName} {
+      allow read: if signedIn() && membership(workspaceId).data.role in ['admin', 'reviewer', 'viewer'];
+      allow create: if canReview(workspaceId)
+        && request.resource.size < 20 * 1024 * 1024
+        && supportedType();
+      allow update, delete: if false;
+    }
+
+    match /workspaces/{workspaceId}/invoices/{invoiceId}/previews/{fileName} {
+      allow read: if signedIn() && membership(workspaceId).data.role in ['admin', 'reviewer', 'viewer'];
+      allow write: if false;
+    }
+
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

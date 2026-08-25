@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import { Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
+import { DemoStoreProvider } from '@/lib/demo-store'
+import { AuthProvider } from '@/components/auth-provider'
+import { WorkspaceProvider } from '@/components/workspace-provider'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Ledger AI — Invoice Intelligence',
+  description: 'AI-powered invoice processing and finance operations workspace',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -35,8 +35,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className} antialiased`}>
-        {children}
+      <body className="antialiased">
+        <AuthProvider><WorkspaceProvider><DemoStoreProvider>{children}</DemoStoreProvider></WorkspaceProvider></AuthProvider>
         <Analytics />
       </body>
     </html>

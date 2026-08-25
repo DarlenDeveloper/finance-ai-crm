@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function memberPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
+    }
+    function isMember(workspaceId) { return signedIn() && exists(memberPath(workspaceId)); }
+    function role(workspaceId) { return get(memberPath(workspaceId)).data.role; }
+    function canReview(workspaceId) {
+      return isMember(workspaceId) && role(workspaceId) in ['admin', 'reviewer'];
+    }
+    function isAdmin(workspaceId) { return isMember(workspaceId) && role(workspaceId) == 'admin'; }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isMember(workspaceId);
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAdmin(workspaceId);
+
+      match /members/{userId} {
+        allow read: if isMember(workspaceId);
+        allow create: if isAdmin(workspaceId)
+          || (signedIn()
+            && userId == request.auth.uid
+            && request.resource.data.role == 'admin'
+            && getAfter(/databases/$(database)/documents/workspaces/$(workspaceId)).data.createdBy == request.auth.uid);
+        allow update, delete: if isAdmin(workspaceId);
+      }
+
+      match /invoices/{invoiceId} {
+        allow read: if isMember(workspaceId);
+        allow create: if canReview(workspaceId)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.workspaceId == workspaceId
+          && request.resource.data.status == 'uploading'
+          && !request.resource.data.keys().hasAny(['extracted', 'normalized', 'duplicateCheck', 'review']);
+        // Client may only finalize or fail its own upload. AI/review fields remain unchanged.
+        allow update: if canReview(workspaceId)
+          && resource.data.createdBy == request.auth.uid
+          && resource.data.status == 'uploading'
+          && request.resource.data.status in ['uploaded', 'failed']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'source', 'ai', 'updatedAt'])
+          && request.resource.data.ai.provider == resource.data.ai.provider
+          && request.resource.data.ai.attemptCount == resource.data.ai.attemptCount;
+        allow delete: if false;
+
+        match /events/{eventId} {
+          allow read: if isMember(workspaceId);
+          allow write: if false;
+        }
+      }
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
