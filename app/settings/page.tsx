@@ -1,6 +1,16 @@
 "use client"
 import { useState } from "react"
-import { Bell, Bot, Building2, Check, Plug, Shield, Users } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Bell = mk("Notification")
+const Bot = mk("Cpu")
+const Building2 = mk("Building")
+const Check = mk("TickCircle", "Bold")
+const Plug = mk("Data2")
+const Shield = mk("Shield")
+const Users = mk("Profile2User")
 import { FinancePageShell } from "@/components/finance-page-shell"
 const tabs=[Building2,Users,Bot,Bell,Plug,Shield]; const names=["Workspace","Team","AI processing","Notifications","Integrations","Security"]
 export default function Settings(){const [saved,setSaved]=useState(false);return <FinancePageShell title="Settings" description="Manage how your finance workspace operates.">

@@ -1,4 +1,13 @@
-import { Building2, ChevronRight, Plus, Search, ShieldCheck, AlertCircle } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Building2 = mk("Building")
+const ChevronRight = mk("ArrowRight2")
+const Plus = mk("Add")
+const Search = mk("SearchNormal1")
+const ShieldCheck = mk("ShieldTick", "Bold")
+const AlertCircle = mk("Warning2")
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 const vendors=[
  ["Nile Energy Systems","NES","Energy","$92,480","12","At risk","red"],["Africa Logistics Co.","AL","Logistics","$68,920","18","Healthy","green"],["Kampala Office Supplies","KO","Operations","$54,210","24","Healthy","green"],["Eastline Technologies","ET","Technology","$47,630","9","Review","amber"],["Gulu Trade Partners","GT","Supplies","$31,440","11","Healthy","green"],["Crestwood Facilities","CF","Facilities","$26,180","16","Healthy","green"]]

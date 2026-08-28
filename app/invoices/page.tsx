@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore"
-import { Download, Filter, Search, UploadCloud, X } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Download = mk("DocumentDownload")
+const Filter = mk("Filter")
+const Search = mk("SearchNormal1")
+const UploadCloud = mk("ImportCurve")
+const X = mk("CloseCircle")
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 import { useAuth } from "@/components/auth-provider"
 import { useWorkspace } from "@/components/workspace-provider"

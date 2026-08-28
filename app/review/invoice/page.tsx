@@ -5,7 +5,12 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { doc, onSnapshot } from "firebase/firestore"
 import { getDownloadURL, ref } from "firebase/storage"
-import { ArrowLeft, LoaderCircle } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const ArrowLeft = mk("ArrowLeft2")
+const LoaderCircle = mk("Refresh")
 import { FinancePageShell } from "@/components/finance-page-shell"
 import { DocumentViewer } from "@/components/invoices/document-viewer"
 import { useWorkspace } from "@/components/workspace-provider"

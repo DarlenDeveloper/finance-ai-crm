@@ -2,7 +2,13 @@
 
 import { FormEvent, useState } from "react"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
-import { ArrowRight, LockKeyhole, Sparkles } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const ArrowRight = mk("ArrowRight")
+const LockKeyhole = mk("Lock1", "Bold")
+const Sparkles = mk("MagicStar", "Bold")
 import { firebaseAuth } from "@/lib/firebase"
 import { useAuth } from "@/components/auth-provider"
 

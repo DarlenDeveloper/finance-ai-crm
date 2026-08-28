@@ -1,6 +1,11 @@
 "use client"
 
-import { Calendar, Download } from 'lucide-react'
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Calendar = mk("Calendar")
+const Download = mk("DocumentDownload")
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts"
 
 const data = [

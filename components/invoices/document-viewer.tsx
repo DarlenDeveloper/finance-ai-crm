@@ -1,7 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Download, LoaderCircle, Maximize2, Minus, Plus, RotateCw } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Download = mk("DocumentDownload")
+const LoaderCircle = mk("Refresh")
+const Maximize2 = mk("Maximize4")
+const Minus = mk("Minus")
+const Plus = mk("Add")
+const RotateCw = mk("RotateRight")
 
 type DocumentViewerProps = {
   url: string

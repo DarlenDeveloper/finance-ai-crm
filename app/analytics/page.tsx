@@ -1,5 +1,11 @@
 "use client"
-import { Download, ArrowDown, ArrowUp } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Download = mk("DocumentDownload")
+const ArrowDown = mk("ArrowDown")
+const ArrowUp = mk("ArrowUp")
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 const monthly=[{m:"Mar",v:42},{m:"Apr",v:58},{m:"May",v:51},{m:"Jun",v:76},{m:"Jul",v:69},{m:"Aug",v:88}]

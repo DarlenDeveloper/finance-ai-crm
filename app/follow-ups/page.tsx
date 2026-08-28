@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore"
-import { MessageSquare, MessageCircle, Send, Check, Clock3, Mail, Filter } from "lucide-react"
+import { Icon as SaxIcon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <SaxIcon name={name} className={className} variant={variant} />
+}
+const MessageSquare = mk("Sms", "Bold")
+const MessageCircle = mk("Whatsapp", "Bold")
+const Send = mk("Send2", "Bold")
+const Check = mk("TickCircle", "Bold")
+const Clock3 = mk("Clock")
+const Mail = mk("MessageText1", "Bold")
+const Filter = mk("Filter")
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 import { useWorkspace } from "@/components/workspace-provider"
 import { firebaseDb } from "@/lib/firebase"

@@ -1,6 +1,12 @@
 "use client"
 
-import { ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const ArrowUp = mk("ArrowUp")
+const ArrowDown = mk("ArrowDown")
+const ChevronsUpDown = mk("ArrangeVertical")
 import { Area, AreaChart, ResponsiveContainer } from "recharts"
 
 const data = [

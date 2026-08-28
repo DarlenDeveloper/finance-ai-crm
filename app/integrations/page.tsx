@@ -1,20 +1,22 @@
 "use client"
 
 import { useState } from "react"
-import {
-  ArrowRight,
-  Check,
-  Check as CheckCircle2,
-  ExternalLink,
-  MessageSquare,
-  MoreHorizontal,
-  Plug,
-  RefreshCw,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  X,
-} from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const ArrowRight = mk("ArrowRight")
+const Check = mk("TickCircle", "Bold")
+const CheckCircle2 = mk("TickCircle", "Bold")
+const ExternalLink = mk("ExportSquare")
+const MessageSquare = mk("Sms", "Bold")
+const MoreHorizontal = mk("More")
+const Plug = mk("Data2")
+const RefreshCw = mk("Refresh")
+const Search = mk("SearchNormal1")
+const ShieldCheck = mk("ShieldTick", "Bold")
+const Sparkles = mk("MagicStar", "Bold")
+const X = mk("CloseCircle")
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 
 type Integration = {

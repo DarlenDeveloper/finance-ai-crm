@@ -5,7 +5,22 @@ import Link from "next/link"
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore"
 import { httpsCallable } from "firebase/functions"
 import { getDownloadURL, ref } from "firebase/storage"
-import { AlertCircle, Check, ArrowLeft, ChevronRight, FileText, Inbox, LoaderCircle, RotateCw, Sparkles, UploadCloud, X } from "lucide-react"
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const AlertCircle = mk("Warning2")
+const Check = mk("TickCircle", "Bold")
+const ArrowLeft = mk("ArrowLeft2")
+const ChevronLeft = mk("ArrowLeft2")
+const ChevronRight = mk("ArrowRight2")
+const FileText = mk("DocumentText")
+const Inbox = mk("Box")
+const LoaderCircle = mk("Refresh")
+const RotateCw = mk("RotateRight")
+const Sparkles = mk("MagicStar", "Bold")
+const UploadCloud = mk("ImportCurve")
+const X = mk("CloseCircle")
 import { FinancePageShell } from "@/components/finance-page-shell"
 import { DocumentViewer } from "@/components/invoices/document-viewer"
 import { useAuth } from "@/components/auth-provider"

@@ -1,6 +1,10 @@
 "use client"
 
-import { Wallet } from 'lucide-react'
+import { Icon, type IconName } from "@/components/icon"
+const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
+  return <Icon name={name} className={className} variant={variant} />
+}
+const Wallet = mk("Wallet")
 
 export function DashboardMetrics() {
   return (
