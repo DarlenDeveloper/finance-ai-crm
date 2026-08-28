@@ -1,27 +1,17 @@
 "use client"
 
-import {
-  LayoutDashboard,
-  FileText,
-  ScanLine,
-  BarChart3,
-  Send,
-  Users,
-  Plug,
-  Settings2,
-  LifeBuoy,
-} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Icon, type IconName } from "@/components/icon"
 
-const primary = [
-  { label: "OVERVIEW", icon: LayoutDashboard, href: "/" },
-  { label: "INVOICES", icon: FileText, href: "/invoices" },
-  { label: "AI REVIEW", icon: ScanLine, href: "/review" },
-  { label: "ANALYTICS", icon: BarChart3, href: "/analytics" },
-  { label: "FOLLOW-UPS", icon: Send, href: "/follow-ups" },
-  { label: "VENDORS", icon: Users, href: "/vendors" },
-  { label: "INTEGRATIONS", icon: Plug, href: "/integrations" },
+const primary: { label: string; icon: IconName; href: string }[] = [
+  { label: "OVERVIEW", icon: "Category", href: "/" },
+  { label: "INVOICES", icon: "DocumentText", href: "/invoices" },
+  { label: "AI REVIEW", icon: "Scan", href: "/review" },
+  { label: "ANALYTICS", icon: "Chart2", href: "/analytics" },
+  { label: "FOLLOW-UPS", icon: "Send2", href: "/follow-ups" },
+  { label: "VENDORS", icon: "Profile2User", href: "/vendors" },
+  { label: "INTEGRATIONS", icon: "Data2", href: "/integrations" },
 ]
 
 export function Sidebar() {
@@ -41,7 +31,6 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-1.5">
         {primary.map((item) => {
-          const Icon = item.icon
           const active = pathname === item.href
           return (
             <Link
@@ -51,7 +40,7 @@ export function Sidebar() {
                 active ? "bg-[#1A1A1A] text-white" : "text-[#777] hover:bg-[#141414] hover:text-[#DDD]"
               }`}
             >
-              <Icon className={`h-[18px] w-[18px] ${active ? "text-[#86efac]" : ""}`} />
+              <Icon name={item.icon} size={18} variant={active ? "Bold" : "Linear"} className={active ? "text-[#86efac]" : ""} />
               <span className="text-xs font-medium tracking-[0.08em]">{item.label}</span>
             </Link>
           )
@@ -60,11 +49,11 @@ export function Sidebar() {
 
       <div className="mt-auto border-t border-[#202020] pt-4">
         <Link href="/settings" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[#777] transition hover:bg-[#141414] hover:text-white">
-          <LifeBuoy className="h-[18px] w-[18px]" />
+          <Icon name="Lifebuoy" size={18} />
           <span className="text-xs font-medium tracking-[0.08em]">HELP CENTER</span>
         </Link>
         <Link href="/settings" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[#777] transition hover:bg-[#141414] hover:text-white">
-          <Settings2 className="h-[18px] w-[18px]" />
+          <Icon name="Setting2" size={18} />
           <span className="text-xs font-medium tracking-[0.08em]">SETTINGS</span>
         </Link>
         <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#121212] p-3">

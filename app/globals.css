@@ -75,7 +75,7 @@
 }
 
 @theme inline {
-  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-poppins), 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -121,6 +121,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 
   /* Added custom selection colors */
@@ -129,6 +130,152 @@
     color: #000000;
   }
 }
+
+/*
+ * Semantic app palette. The product UI was authored with hardcoded dark hex
+ * values; these variables give both themes a coherent surface/text/line set.
+ * Dark values reproduce the original look; light values are the new light mode.
+ */
+:root {
+  --app-bg: #000000;
+  --surface-1: #0d0d0d;
+  --surface-2: #151515;
+  --surface-3: #101010;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: #242424;
+  --text-1: #ffffff;
+  --text-2: #999999;
+  --text-3: #666666;
+  --accent: #86efac;
+  --accent-contrast: #000000;
+}
+
+.light {
+  --app-bg: #f6f7f8;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f1f2f4;
+  --surface-hover: #eef0f3;
+  --surface-active: #e8ebef;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: #e2e4e8;
+  --text-1: #0d0d0d;
+  --text-2: #555b63;
+  --text-3: #8a9099;
+  --accent: #16a34a;
+  --accent-contrast: #ffffff;
+
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.205 0 0);
+}
+
+/*
+ * Light-mode safety net. Many components use hardcoded dark arbitrary values.
+ * Under the light theme, remap them so every page stays legible even before it
+ * is migrated to the semantic tokens above. Covers base surfaces, slightly
+ * elevated surfaces (nav active/hover, chips), borders, text, and hover states.
+ */
+.light .bg-black,
+.light .bg-black\/70,
+.light .bg-black\/50,
+.light .bg-black\/60,
+.light .bg-black\/80 { background-color: var(--app-bg) !important; }
+.light .text-white { color: var(--text-1) !important; }
+
+/* Base card / panel surfaces */
+.light .bg-\[\#000\],
+.light .bg-\[\#000000\],
+.light .bg-\[\#0a0a0a\],
+.light .bg-\[\#0d0d0d\],
+.light .bg-\[\#0D0D0D\],
+.light .bg-\[\#0f0f0f\],
+.light .bg-\[\#101010\],
+.light .bg-\[\#111\],
+.light .bg-\[\#111111\],
+.light .bg-\[\#121212\],
+.light .bg-\[\#141414\],
+.light .bg-\[\#151515\] { background-color: var(--surface-1) !important; }
+
+/* Slightly elevated surfaces: nav active pills, chips, avatars, inputs */
+.light .bg-\[\#181818\],
+.light .bg-\[\#191919\],
+.light .bg-\[\#1a1a1a\],
+.light .bg-\[\#1A1A1A\],
+.light .bg-\[\#1b1b1b\],
+.light .bg-\[\#1B1B1B\],
+.light .bg-\[\#1c1c1c\],
+.light .bg-\[\#1d1d1d\],
+.light .bg-\[\#1e1e1e\],
+.light .bg-\[\#1f1f1f\],
+.light .bg-\[\#1F1F1F\],
+.light .bg-\[\#202020\],
+.light .bg-\[\#212121\],
+.light .bg-\[\#222\],
+.light .bg-\[\#242424\],
+.light .bg-\[\#252525\],
+.light .bg-\[\#262626\],
+.light .bg-\[\#292929\] { background-color: var(--surface-3) !important; }
+
+/* Hover backgrounds -> subtle grey, not black */
+.light .hover\:bg-\[\#111\]:hover,
+.light .hover\:bg-\[\#111111\]:hover,
+.light .hover\:bg-\[\#121212\]:hover,
+.light .hover\:bg-\[\#141414\]:hover,
+.light .hover\:bg-\[\#151515\]:hover,
+.light .hover\:bg-\[\#181818\]:hover,
+.light .hover\:bg-\[\#1a1a1a\]:hover,
+.light .hover\:bg-\[\#1c1c1c\]:hover { background-color: var(--surface-hover) !important; }
+
+/* Hover text -> readable dark */
+.light .hover\:text-white:hover,
+.light .hover\:text-\[\#ddd\]:hover,
+.light .hover\:text-\[\#DDD\]:hover { color: var(--text-1) !important; }
+
+/* Hover borders */
+.light .hover\:border-\[\#333\]:hover,
+.light .hover\:border-\[\#303030\]:hover { border-color: var(--line-strong) !important; }
+
+/* Borders */
+.light .border-\[\#181818\],
+.light .border-\[\#191919\],
+.light .border-\[\#1c1c1c\],
+.light .border-\[\#1C1C1C\],
+.light .border-\[\#1f1f1f\],
+.light .border-\[\#1F1F1F\],
+.light .border-\[\#202020\],
+.light .border-\[\#222\],
+.light .border-\[\#242424\],
+.light .border-\[\#262626\],
+.light .border-\[\#272727\],
+.light .border-\[\#292929\],
+.light .border-\[\#303030\],
+.light .border-\[\#313131\],
+.light .border-\[\#333\] { border-color: var(--line-strong) !important; }
+.light .border-white\/\[0\.04\],
+.light .border-white\/\[0\.05\],
+.light .border-white\/\[0\.06\] { border-color: var(--line) !important; }
+
+/* Muted text */
+.light .text-\[\#5F5F5F\],
+.light .text-\[\#555\],
+.light .text-\[\#555555\],
+.light .text-\[\#666\],
+.light .text-\[\#666666\],
+.light .text-\[\#6F6F6F\],
+.light .text-\[\#777\],
+.light .text-\[\#777777\],
+.light .text-\[\#888\],
+.light .text-\[\#999\],
+.light .text-\[\#AAA\],
+.light .text-\[\#aaa\],
+.light .text-\[\#bbb\],
+.light .text-\[\#ccc\],
+.light .text-\[\#DDD\],
+.light .text-\[\#ddd\] { color: var(--text-2) !important; }
+
+/* Active nav item icon/label should read as dark, not the light-on-dark white */
+.light .bg-\[\#1A1A1A\] .text-white,
+.light .bg-\[\#1a1a1a\] .text-white { color: var(--text-1) !important; }
 
 /* Added utility to hide scrollbars */
 @layer utilities {

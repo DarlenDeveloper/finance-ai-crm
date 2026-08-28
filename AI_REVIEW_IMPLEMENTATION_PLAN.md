@@ -1,5 +1,18 @@
 # Ledger AI — AI Review Implementation Plan
 
+> **Implementation note (2026-08):** Sections 3.2 and 7 describe extraction and
+> approve/reject as Next.js route handlers. The shipped implementation instead uses
+> **Firebase Cloud Functions**:
+>
+> - `processInvoice` — Firestore `onDocumentUpdated` trigger (`functions/src/index.ts`).
+>   Runs Gemini extraction when an invoice reaches `uploaded`, then transitions to
+>   `needs_review` / `failed`. Also runs deterministic duplicate detection.
+> - `reviewInvoice` — callable (`functions/src/index.ts`). Transactional
+>   approve / reject / retry with `expectedUpdatedAt` concurrency guard and audit events.
+>
+> The `app/api/workspaces/.../extract` route scaffolding from the original plan has been
+> removed. All other sections remain accurate.
+
 ## 1. Objective
 
 Build the first production-backed Ledger AI workflow:

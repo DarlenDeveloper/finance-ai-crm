@@ -24,10 +24,12 @@ export async function uploadInvoice(
   const storagePath = `workspaces/${workspaceId}/invoices/${invoiceId}/source/${safeName}`
   const invoiceRef = doc(firebaseDb, `workspaces/${workspaceId}/invoices/${invoiceId}`)
 
+  const sha256 = await sha256Hex(file)
+
   await setDoc(invoiceRef, {
     workspaceId,
     status: "uploading",
-    source: { storagePath, originalName: file.name, contentType: file.type, sizeBytes: file.size, sha256: null, pageCount: null },
+    source: { storagePath, originalName: file.name, contentType: file.type, sizeBytes: file.size, sha256, pageCount: null },
     ai: { provider: "google", model: null, schemaVersion: 1, promptVersion: 1, startedAt: null, completedAt: null, latencyMs: null, attemptCount: 0, warnings: [], errorCode: null, errorMessage: null },
     createdAt: serverTimestamp(), createdBy: userId, updatedAt: serverTimestamp(),
   })
@@ -43,4 +45,12 @@ export async function uploadInvoice(
     await updateDoc(invoiceRef, { status: "failed", "ai.errorCode": "UPLOAD_FAILED", "ai.errorMessage": "Invoice upload failed.", updatedAt: serverTimestamp() })
     throw cause
   }
+}
+
+async function sha256Hex(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer()
+  const digest = await crypto.subtle.digest("SHA-256", buffer)
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
 }

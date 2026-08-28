@@ -4,16 +4,16 @@ import { useState } from "react"
 import {
   ArrowRight,
   Check,
-  CheckCircle2,
+  Check as CheckCircle2,
   ExternalLink,
-  Mail,
+  MessageSquare,
   MoreHorizontal,
   Plug,
   RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
-  Unplug,
+  X,
 } from "lucide-react"
 import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
 
@@ -125,7 +125,7 @@ export default function IntegrationsPage() {
               <p className="mt-2 max-w-2xl text-xs leading-5 text-[#777]">Connect an inbox and CRM will detect invoice attachments, extract the data, check for duplicates, then prepare verified records for your accounting platform.</p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2 text-[10px] text-[#777]"><Mail className="h-4 w-4" /><ArrowRight className="h-3.5 w-3.5" /><Sparkles className="h-4 w-4 text-[#86efac]" /><ArrowRight className="h-3.5 w-3.5" /><CheckCircle2 className="h-4 w-4" /></div>
+          <div className="flex shrink-0 items-center gap-2 text-[10px] text-[#777]"><MessageSquare className="h-4 w-4" /><ArrowRight className="h-3.5 w-3.5" /><Sparkles className="h-4 w-4 text-[#86efac]" /><ArrowRight className="h-3.5 w-3.5" /><CheckCircle2 className="h-4 w-4" /></div>
         </div>
       </div>
 
@@ -154,7 +154,7 @@ export default function IntegrationsPage() {
 
                 {isConnected ? (
                   <div className="mt-5 rounded-xl border border-[#86efac]/10 bg-[#86efac]/[0.04] p-3">
-                    <div className="flex items-center justify-between gap-3"><div><p className="text-[11px] font-medium text-[#CFCFCF]">{item.account || `Finance Control · ${item.name}`}</p><p className="mt-1 flex items-center gap-1.5 text-[9px] text-[#666]"><RefreshCw className="h-3 w-3" />{item.sync || "Initial sync ready"}</p></div><button onClick={() => disconnect(item.id)} className="flex items-center gap-1.5 text-[9px] text-[#666] hover:text-red-300"><Unplug className="h-3 w-3" />Disconnect</button></div>
+                    <div className="flex items-center justify-between gap-3"><div><p className="text-[11px] font-medium text-[#CFCFCF]">{item.account || `Finance Control · ${item.name}`}</p><p className="mt-1 flex items-center gap-1.5 text-[9px] text-[#666]"><RefreshCw className="h-3 w-3" />{item.sync || "Initial sync ready"}</p></div><button onClick={() => disconnect(item.id)} className="flex items-center gap-1.5 text-[9px] text-[#666] hover:text-red-300"><X className="h-3 w-3" />Disconnect</button></div>
                   </div>
                 ) : (
                   <button onClick={() => connect(item.id)} disabled={isConnecting} className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[#2A2A2A] bg-[#151515] text-xs font-medium text-[#CCC] transition hover:border-[#86efac]/30 hover:text-white disabled:opacity-60">

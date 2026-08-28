@@ -7,8 +7,9 @@
   "scripts": {
     "build": "tsc",
     "lint": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node --test \"lib-test/**/*.test.js\"",
     "serve": "npm run build && firebase emulators:start --only functions,firestore,storage",
-    "deploy": "firebase deploy --only functions:processInvoice"
+    "deploy": "firebase deploy --only functions:processInvoice,functions:reviewInvoice"
   },
   "dependencies": {
     "@google/genai": "^2.17.1",

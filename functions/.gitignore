@@ -1,4 +1,8 @@
 lib/
+lib-test/
 node_modules/
+benchmark/samples/
+benchmark/labels/
+benchmark/results/
 .secret.local
 firebase-debug.log*
