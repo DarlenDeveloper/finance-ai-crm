@@ -20,7 +20,28 @@ type Money = { amount: number | null; currency: string | null }
 type Invoice = {
   status: string
   source?: { storagePath?: string; originalName?: string; contentType?: string; sizeBytes?: number }
-  normalized?: { vendorName: string | null; invoiceNumber: string | null; invoiceDate: string | null; dueDate: string | null; subtotal: Money; tax: Money; total: Money }
+  normalized?: {
+    vendorName?: string | null
+    issuerName?: string | null
+    customerName?: string | null
+    customerTaxId?: string | null
+    customerEmail?: string | null
+    customerPhone?: string | null
+    handlerName?: string | null
+    handlerEmail?: string | null
+    handlerPhone?: string | null
+    invoiceNumber?: string | null
+    invoiceDate?: string | null
+    dueDate?: string | null
+    subtotal?: Money
+    tax?: Money
+    total?: Money
+    amountsTaxInclusive?: boolean | null
+  }
+}
+
+function customerName(n?: Invoice["normalized"]): string {
+  return n?.customerName || n?.vendorName || ""
 }
 
 function InvoiceDetail() {
@@ -54,11 +75,11 @@ function InvoiceDetail() {
   if (notFound || !invoice) return <FinancePageShell title="Invoice" description="This invoice could not be found."><div className="rounded-2xl border border-white/[0.05] bg-[#0d0d0d] p-8 text-center text-sm text-[#666]"><p>This invoice does not exist or you do not have access to it.</p><Link href="/review" className="mt-4 inline-flex items-center gap-2 text-xs text-[#86efac]"><ArrowLeft className="h-4 w-4"/>Back to review queue</Link></div></FinancePageShell>
 
   const n = invoice.normalized
-  return <FinancePageShell title={n?.vendorName || invoice.source?.originalName || "Invoice"} description={`Status: ${invoice.status}`} action={<Link href="/review" className="flex h-10 items-center gap-2 rounded-xl border border-[#242424] px-4 text-xs text-[#888]"><ArrowLeft className="h-4 w-4"/>Back to queue</Link>}>
+  return <FinancePageShell title={customerName(n) || invoice.source?.originalName || "Invoice"} description={`Status: ${invoice.status}`} action={<Link href="/review" className="flex h-10 items-center gap-2 rounded-xl border border-[#242424] px-4 text-xs text-[#888]"><ArrowLeft className="h-4 w-4"/>Back to queue</Link>}>
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-2xl border border-white/[0.05] bg-[#151515] p-5"><p className="mb-4 text-sm font-medium">{invoice.source?.originalName || "Invoice document"}</p><DocumentViewer url={documentUrl} contentType={invoice.source?.contentType} fileName={invoice.source?.originalName}/></div>
       <div className="rounded-2xl border border-white/[0.05] bg-[#0d0d0d] p-5"><dl className="space-y-3 text-sm">
-        <Row label="Vendor" value={n?.vendorName}/><Row label="Invoice number" value={n?.invoiceNumber}/><Row label="Invoice date" value={n?.invoiceDate}/><Row label="Due date" value={n?.dueDate}/><Row label="Subtotal" value={money(n?.subtotal)}/><Row label="Tax" value={money(n?.tax)}/><Row label="Total" value={money(n?.total)}/>
+        <Row label="Customer" value={customerName(n)}/>{n?.issuerName ? <Row label="Issuer" value={n.issuerName}/> : null}<Row label="Customer contact" value={n?.customerEmail || n?.customerPhone}/><Row label="Sales person" value={n?.handlerName || n?.handlerEmail}/><Row label="Invoice number" value={n?.invoiceNumber}/><Row label="Invoice date" value={n?.invoiceDate}/><Row label="Due date" value={n?.dueDate}/><Row label="Subtotal" value={money(n?.subtotal)}/><Row label="Tax" value={money(n?.tax)}/><Row label={n?.amountsTaxInclusive ? "Total payable (tax inclusive)" : "Total payable"} value={money(n?.total)}/>
       </dl></div>
     </div>
   </FinancePageShell>

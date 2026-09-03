@@ -19,7 +19,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -276,6 +276,79 @@
 /* Active nav item icon/label should read as dark, not the light-on-dark white */
 .light .bg-\[\#1A1A1A\] .text-white,
 .light .bg-\[\#1a1a1a\] .text-white { color: var(--text-1) !important; }
+
+/*
+ * Accessible semantic statuses for light mode. Dark-theme utilities such as
+ * text-red-300 and text-[#86efac] are intentionally pale; remap them to WCAG-
+ * friendly foregrounds and tinted surfaces when the document is light.
+ */
+.light {
+  --success-text: #166534;
+  --success-bg: #ecfdf3;
+  --success-border: #86efac;
+  --danger-text: #b42318;
+  --danger-bg: #fef2f2;
+  --danger-border: #fca5a5;
+  --warning-text: #92400e;
+  --warning-bg: #fffbeb;
+  --warning-border: #fcd34d;
+  --info-text: #075985;
+  --info-bg: #f0f9ff;
+  --info-border: #7dd3fc;
+}
+
+/* Success / product accent */
+.light [class~="text-[#86efac]"],
+.light [class~="text-[#b8f7cc]"] { color: var(--success-text) !important; }
+.light [class~="bg-[#86efac]/10"],
+.light [class~="bg-[#86efac]/[0.06]"] { background-color: var(--success-bg) !important; }
+.light [class~="border-[#86efac]/10"],
+.light [class~="border-[#86efac]/20"],
+.light [class~="border-[#86efac]/30"] { border-color: var(--success-border) !important; }
+.light [class~="hover:text-[#86efac]"]:hover { color: var(--success-text) !important; }
+
+/* Errors / failed states */
+.light .text-red-200,
+.light .text-red-300 { color: var(--danger-text) !important; }
+.light .bg-red-400\/10,
+.light .bg-red-400\/\[0\.06\],
+.light .bg-red-400\/\[0\.07\] { background-color: var(--danger-bg) !important; }
+.light .border-red-400\/10,
+.light .border-red-400\/15,
+.light .border-red-400\/20 { border-color: var(--danger-border) !important; }
+.light .hover\:text-red-300:hover { color: var(--danger-text) !important; }
+
+/* Warnings / review states */
+.light .text-amber-200,
+.light .text-amber-300,
+.light [class~="text-[#c9b487]"] { color: var(--warning-text) !important; }
+.light .bg-amber-400\/10,
+.light .bg-amber-400\/\[0\.06\],
+.light .bg-amber-400\/\[\.07\] { background-color: var(--warning-bg) !important; }
+.light .border-amber-400\/15,
+.light .border-amber-400\/20 { border-color: var(--warning-border) !important; }
+
+/* Informational / processing states */
+.light .text-sky-200,
+.light .text-sky-300 { color: var(--info-text) !important; }
+.light .bg-sky-400\/10 { background-color: var(--info-bg) !important; }
+.light .border-sky-400\/20 { border-color: var(--info-border) !important; }
+
+/* Duplicate warnings use orange rather than amber. */
+.light .text-orange-200,
+.light .text-orange-300 { color: #9a3412 !important; }
+.light .bg-orange-400\/10,
+.light .bg-orange-400\/\[0\.07\] { background-color: #fff7ed !important; }
+.light .border-orange-400\/20,
+.light .border-orange-400\/25 { border-color: #fdba74 !important; }
+
+/* Keep destructive actions white-on-red despite the generic text-white remap. */
+.light .bg-red-600.text-white,
+.light .bg-destructive.text-white { color: #ffffff !important; }
+
+/* Dialog overlays must remain translucent dark in light mode. */
+.light [data-slot="dialog-overlay"],
+.light [data-slot="alert-dialog-overlay"] { background-color: rgba(15, 23, 42, 0.48) !important; }
 
 /* Added utility to hide scrollbars */
 @layer utilities {

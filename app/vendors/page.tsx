@@ -1,19 +1,5 @@
-import { Icon, type IconName } from "@/components/icon"
-const mk = (name: IconName, variant?: "Linear" | "Bold") => function I({ className }: { className?: string }) {
-  return <Icon name={name} className={className} variant={variant} />
+import { redirect } from "next/navigation"
+
+export default function VendorsPage() {
+  redirect("/contacts")
 }
-const Building2 = mk("Building")
-const ChevronRight = mk("ArrowRight2")
-const Plus = mk("Add")
-const Search = mk("SearchNormal1")
-const ShieldCheck = mk("ShieldTick", "Bold")
-const AlertCircle = mk("Warning2")
-import { FinancePageShell, StatCard } from "@/components/finance-page-shell"
-const vendors=[
- ["Nile Energy Systems","NES","Energy","$92,480","12","At risk","red"],["Africa Logistics Co.","AL","Logistics","$68,920","18","Healthy","green"],["Kampala Office Supplies","KO","Operations","$54,210","24","Healthy","green"],["Eastline Technologies","ET","Technology","$47,630","9","Review","amber"],["Gulu Trade Partners","GT","Supplies","$31,440","11","Healthy","green"],["Crestwood Facilities","CF","Facilities","$26,180","16","Healthy","green"]]
-const tones:Record<string,string>={red:"text-red-300 bg-red-400/10",green:"text-[#86efac] bg-[#86efac]/10",amber:"text-amber-300 bg-amber-400/10"}
-export default function Vendors(){return <FinancePageShell title="Vendors" description="Supplier history, payment exposure, and compliance at a glance." action={<button className="flex h-11 items-center gap-2 rounded-xl bg-[#86efac] px-4 text-xs font-semibold text-black"><Plus className="h-4 w-4"/>Plus vendor</button>}>
- <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Active vendors" value="42" detail="6 added this quarter"/><StatCard label="Total exposure" value="$84,290" detail="19 unpaid invoices"/><StatCard label="Compliance complete" value="91%" detail="38 fully verified" color="text-[#86efac]"/><StatCard label="At-risk vendors" value="3" detail="Requires attention" color="text-red-300"/></div>
- <div className="overflow-hidden rounded-2xl border border-white/[0.04] bg-[#0d0d0d]"><div className="flex items-center gap-2 border-b border-[#1c1c1c] p-4"><Search className="h-4 w-4 text-[#555]"/><input placeholder="Search vendors" className="h-9 flex-1 bg-transparent text-xs outline-none placeholder:text-[#555]"/><button className="rounded-lg border border-[#292929] px-3 py-2 text-[10px] text-[#777]">All categories</button></div><div className="overflow-x-auto"><table className="w-full min-w-[760px]"><thead><tr className="text-left text-[10px] uppercase tracking-widest text-[#555]"><th className="px-5 py-3">Vendor</th><th>LayoutDashboard</th><th>Lifetime spend</th><th>Invoices</th><th>Health</th><th/></tr></thead><tbody>{vendors.map(v=><tr key={v[0]} className="border-t border-[#181818] hover:bg-[#111]"><td className="px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#1a1a1a] text-[10px] font-bold text-[#aaa]">{v[1]}</span><div><p className="text-sm font-medium text-[#ddd]">{v[0]}</p><p className="mt-1 text-[10px] text-[#555]">Last invoice 6 days ago</p></div></div></td><td className="text-xs text-[#777]">{v[2]}</td><td className="text-sm font-medium">{v[3]}</td><td className="text-xs text-[#777]">{v[4]}</td><td><span className={`rounded-full px-2.5 py-1 text-[10px] ${tones[v[6]]}`}>{v[5]}</span></td><td><ChevronRight className="h-4 w-4 text-[#555]"/></td></tr>)}</tbody></table></div></div>
- <div className="grid gap-5 md:grid-cols-2"><div className="rounded-2xl border border-red-400/10 bg-[#0d0d0d] p-5"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-red-400/10 text-red-300"><AlertCircle className="h-4 w-4"/></span><div><p className="text-sm font-medium">Vendor risk alert</p><p className="mt-1 text-xs text-[#666]">Nile Energy has two disputed invoices.</p></div></div><button className="mt-5 text-xs text-red-300">Review vendor →</button></div><div className="rounded-2xl border border-[#86efac]/10 bg-[#0d0d0d] p-5"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#86efac]/10 text-[#86efac]"><ShieldCheck className="h-4 w-4"/></span><div><p className="text-sm font-medium">Compliance status</p><p className="mt-1 text-xs text-[#666]">4 vendor profiles need updated tax records.</p></div></div><button className="mt-5 text-xs text-[#86efac]">View missing documents →</button></div></div>
- </FinancePageShell>}

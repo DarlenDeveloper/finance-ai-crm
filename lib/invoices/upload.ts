@@ -30,7 +30,7 @@ export async function uploadInvoice(
     workspaceId,
     status: "uploading",
     source: { storagePath, originalName: file.name, contentType: file.type, sizeBytes: file.size, sha256, pageCount: null },
-    ai: { provider: "google", model: null, schemaVersion: 1, promptVersion: 1, startedAt: null, completedAt: null, latencyMs: null, attemptCount: 0, warnings: [], errorCode: null, errorMessage: null },
+    ai: { provider: "google", model: null, schemaVersion: 2, promptVersion: 2, startedAt: null, completedAt: null, latencyMs: null, attemptCount: 0, warnings: [], errorCode: null, errorMessage: null },
     createdAt: serverTimestamp(), createdBy: userId, updatedAt: serverTimestamp(),
   })
 
@@ -45,6 +45,85 @@ export async function uploadInvoice(
     await updateDoc(invoiceRef, { status: "failed", "ai.errorCode": "UPLOAD_FAILED", "ai.errorMessage": "Invoice upload failed.", updatedAt: serverTimestamp() })
     throw cause
   }
+}
+
+export const MAX_BATCH_INVOICES = 10
+
+export type BatchUploadProgress = {
+  total: number
+  completed: number
+  succeeded: number
+  failed: number
+  percent: number
+}
+
+export type BatchUploadFailure = { fileName: string; message: string }
+export type BatchUploadResult = {
+  total: number
+  succeeded: number
+  failed: number
+  uploads: Array<{ invoiceId: string; workspaceId: string; storagePath: string }>
+  failures: BatchUploadFailure[]
+}
+
+/** Upload up to ten invoices concurrently. One failed file never cancels the others. */
+export async function uploadInvoices(
+  files: File[],
+  workspaceId: string,
+  userId: string,
+  onProgress?: (progress: BatchUploadProgress) => void,
+): Promise<BatchUploadResult> {
+  if (!files.length) return { total: 0, succeeded: 0, failed: 0, uploads: [], failures: [] }
+  if (files.length > MAX_BATCH_INVOICES) throw new Error(`Upload up to ${MAX_BATCH_INVOICES} invoices at a time.`)
+
+  const transferred = files.map(() => 0)
+  const sizes = files.map((file) => Math.max(file.size, 1))
+  const totalBytes = sizes.reduce((sum, size) => sum + size, 0)
+  const uploads: BatchUploadResult["uploads"] = []
+  const failures: BatchUploadFailure[] = []
+  let cursor = 0
+  let completed = 0
+  let succeeded = 0
+  let failed = 0
+
+  const emitProgress = () => onProgress?.({
+    total: files.length,
+    completed,
+    succeeded,
+    failed,
+    percent: Math.round(transferred.reduce((sum, bytes) => sum + bytes, 0) / totalBytes * 100),
+  })
+
+  emitProgress()
+  const worker = async () => {
+    while (true) {
+      const index = cursor++
+      if (index >= files.length) return
+      const file = files[index]
+      try {
+        const result = await uploadInvoice(file, workspaceId, userId, (progress) => {
+          transferred[index] = Math.min(progress.transferred, sizes[index])
+          emitProgress()
+        })
+        uploads.push(result)
+        succeeded++
+      } catch (cause) {
+        failures.push({ fileName: file.name, message: uploadErrorMessage(cause) })
+        failed++
+      } finally {
+        transferred[index] = sizes[index]
+        completed++
+        emitProgress()
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(files.length, MAX_BATCH_INVOICES) }, () => worker()))
+  return { total: files.length, succeeded, failed, uploads, failures }
+}
+
+function uploadErrorMessage(cause: unknown): string {
+  return cause instanceof Error && cause.message ? cause.message : "Upload failed."
 }
 
 async function sha256Hex(file: File): Promise<string> {

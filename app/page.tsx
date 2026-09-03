@@ -31,7 +31,8 @@ import { useAuth } from "@/components/auth-provider"
 import { useWorkspace } from "@/components/workspace-provider"
 import { firebaseDb } from "@/lib/firebase"
 import { formatMoney } from "@/lib/demo-store"
-import { uploadInvoice } from "@/lib/invoices/upload"
+import { uploadInvoices } from "@/lib/invoices/upload"
+import { invoicePaymentState } from "@/lib/invoices/payment"
 
 type Status = "uploading" | "uploaded" | "processing" | "needs_review" | "verified" | "rejected" | "failed"
 type Money = { amount?: number | null; currency?: string | null }
@@ -39,9 +40,15 @@ type DashInvoice = {
   id: string
   status: Status
   source?: { originalName?: string }
-  normalized?: { vendorName?: string | null; invoiceNumber?: string | null; invoiceDate?: string | null; dueDate?: string | null; total?: Money }
+  normalized?: { vendorName?: string | null; customerName?: string | null; invoiceNumber?: string | null; invoiceDate?: string | null; dueDate?: string | null; total?: Money }
+  payment?: { status?: "paid" | "unpaid" | null }
   duplicateCheck?: { status?: string; matchedInvoiceIds?: string[]; score?: number | null }
   createdAt?: { toDate?: () => Date }
+}
+
+/** Customer semantics with a fallback to the legacy vendor name. */
+function dashCustomerName(invoice: DashInvoice): string {
+  return invoice.normalized?.customerName || invoice.normalized?.vendorName || ""
 }
 
 const statusMeta: Record<string, { label: string; tone: string }> = {
@@ -64,11 +71,7 @@ const statusStyles: Record<string, string> = {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 function isOverdue(invoice: DashInvoice): boolean {
-  const due = invoice.normalized?.dueDate
-  if (!due) return false
-  // Overdue = still open (not verified/rejected) and past the due date.
-  if (["rejected", "verified"].includes(invoice.status)) return false
-  return due < new Date().toISOString().slice(0, 10)
+  return invoicePaymentState(invoice) === "overdue"
 }
 
 export default function Dashboard() {
@@ -78,6 +81,7 @@ export default function Dashboard() {
   const [invoices, setInvoices] = useState<DashInvoice[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadPercent, setUploadPercent] = useState(0)
   const [uploaded, setUploaded] = useState(false)
   const [error, setError] = useState("")
 
@@ -94,7 +98,7 @@ export default function Dashboard() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const thisMonth = invoices.filter((i) => { const d = i.createdAt?.toDate?.(); return d ? d >= monthStart : false })
     const needsReview = invoices.filter((i) => i.status === "needs_review")
-    const awaiting = invoices.filter((i) => ["needs_review", "verified"].includes(i.status) && !isOverdue(i))
+    const awaiting = invoices.filter((i) => invoicePaymentState(i) === "unpaid")
     const awaitingValue = awaiting.reduce((sum, i) => sum + (i.normalized?.total?.amount || 0), 0)
     const overdue = invoices.filter(isOverdue)
     const overdueValue = overdue.reduce((sum, i) => sum + (i.normalized?.total?.amount || 0), 0)
@@ -115,8 +119,9 @@ export default function Dashboard() {
       const idx = (created.getFullYear() - base.getFullYear()) * 12 + (created.getMonth() - base.getMonth())
       if (idx < 0 || idx > 5) continue
       const amount = invoice.normalized?.total?.amount || 0
-      if (invoice.status === "verified") buckets[idx].paid += amount
-      else if (["needs_review", "processing", "uploaded"].includes(invoice.status)) buckets[idx].pending += amount
+      const paymentState = invoicePaymentState(invoice)
+      if (paymentState === "paid") buckets[idx].paid += amount
+      else if (paymentState === "unpaid" || paymentState === "overdue" || ["needs_review", "processing", "uploaded"].includes(invoice.status)) buckets[idx].pending += amount
     }
     return buckets
   }, [invoices])
@@ -145,12 +150,18 @@ export default function Dashboard() {
     if (!files?.length || !workspaceId || !user) return
     setUploading(true); setUploaded(false); setError("")
     try {
-      for (const file of Array.from(files)) await uploadInvoice(file, workspaceId, user.uid)
-      setUploaded(true)
+      const result = await uploadInvoices(Array.from(files), workspaceId, user.uid, ({ percent }) => setUploadPercent(percent))
+      setUploaded(result.succeeded > 0)
+      if (result.failed) {
+        const names = result.failures.slice(0, 3).map((failure) => failure.fileName).join(", ")
+        const more = result.failed > 3 ? ` and ${result.failed - 3} more` : ""
+        setError(`${result.succeeded} uploaded; ${result.failed} failed (${names}${more}). Successful invoices are processing independently.`)
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Upload failed.")
     } finally {
       setUploading(false)
+      setUploadPercent(0)
       if (fileRef.current) fileRef.current.value = ""
     }
   }
@@ -172,7 +183,7 @@ export default function Dashboard() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => fileRef.current?.click()} disabled={uploading || !workspaceId} className="flex h-11 items-center gap-2 rounded-xl bg-[#86efac] px-4 text-xs font-semibold text-black transition hover:bg-[#a7f3c0] disabled:opacity-50">
-                  <UploadCloud className="h-4 w-4" /> {uploading ? "Uploading…" : "Upload invoices"}
+                  <UploadCloud className="h-4 w-4" /> {uploading ? `Uploading ${uploadPercent}%` : "Upload up to 10 invoices"}
                 </button>
                 <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" className="hidden" onChange={(event) => handleUpload(event.target.files)} />
               </div>
@@ -181,7 +192,7 @@ export default function Dashboard() {
             {(uploading || uploaded || error) && (
               <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${error ? "border-red-400/20 bg-red-400/10 text-red-200" : uploaded ? "border-[#86efac]/20 bg-[#86efac]/10 text-[#b8f7cc]" : "border-[#313131] bg-[#121212] text-[#AAA]"}`}>
                 {error ? <X className="h-4 w-4" /> : uploaded ? <CheckCircle2 className="h-4 w-4" /> : <ScanLine className="h-4 w-4 animate-pulse text-[#86efac]" />}
-                {error || (uploaded ? "Upload received. Ledger AI is extracting invoice data." : "Uploading and preparing document for AI review…")}
+                {error || (uploaded ? "Upload received. Each invoice is being extracted independently." : `Uploading invoices in parallel… ${uploadPercent}%`)}
                 <button onClick={() => { setUploaded(false); setError("") }} className="ml-auto"><X className="h-4 w-4" /></button>
               </div>
             )}
@@ -219,7 +230,7 @@ export default function Dashboard() {
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#86efac]/[0.06] blur-3xl" />
                 <div className="flex items-center justify-between"><div className="grid h-9 w-9 place-items-center rounded-xl bg-[#86efac]/10 text-[#86efac]"><Sparkles className="h-4 w-4" /></div><span className="rounded-full border border-[#86efac]/20 px-2 py-1 text-[9px] uppercase tracking-widest text-[#86efac]">AI insight</span></div>
                 <h2 className="mt-5 text-xl font-medium tracking-tight">{duplicates.count > 0 ? `${duplicates.count} invoice${duplicates.count === 1 ? "" : "s"} may be duplicate${duplicates.count === 1 ? "" : "s"}.` : "No duplicate invoices detected."}</h2>
-                <p className="mt-2 text-sm leading-6 text-[#777]">{duplicates.count > 0 ? "Ledger AI matched invoice numbers, totals, and vendor details across your scans." : "Ledger AI checks every extracted invoice against your workspace history."}</p>
+                <p className="mt-2 text-sm leading-6 text-[#777]">{duplicates.count > 0 ? "Ledger AI matched invoice numbers, totals, and customer details across your scans." : "Ledger AI checks every extracted invoice against your workspace history."}</p>
                 {duplicates.count > 0 && <div className="mt-5 rounded-xl border border-[#222] bg-[#111] p-4">
                   <div className="flex items-center justify-between"><span className="text-xs text-[#888]">Potential duplicate value</span><span className="text-sm font-medium">{formatMoney(duplicates.value)}</span></div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#262626]"><div className="h-full rounded-full bg-[#86efac]" style={{ width: `${Math.round(duplicates.topScore * 100)}%` }} /></div>
@@ -235,16 +246,16 @@ export default function Dashboard() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[760px] text-left">
-                  <thead><tr className="text-[10px] uppercase tracking-[0.14em] text-[#555]"><th className="px-5 py-3 font-medium">Vendor</th><th className="px-5 py-3 font-medium">Invoice</th><th className="px-5 py-3 font-medium">ScanLine date</th><th className="px-5 py-3 text-right font-medium">Amount</th><th className="px-5 py-3 font-medium">AI status</th><th className="w-10" /></tr></thead>
+                  <thead><tr className="text-[10px] uppercase tracking-[0.14em] text-[#555]"><th className="px-5 py-3 font-medium">Customer</th><th className="px-5 py-3 font-medium">Invoice</th><th className="px-5 py-3 font-medium">Scanned date</th><th className="px-5 py-3 text-right font-medium">Amount</th><th className="px-5 py-3 font-medium">AI status</th><th className="w-10" /></tr></thead>
                   <tbody>
                     {recent.map((invoice) => {
                       const meta = statusMeta[invoice.status] || { label: invoice.status, tone: "blue" }
-                      const vendor = invoice.normalized?.vendorName || invoice.source?.originalName || "Awaiting extraction"
-                      const initials = vendor.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "IN"
+                      const customer = dashCustomerName(invoice) || invoice.source?.originalName || "Awaiting extraction"
+                      const initials = customer.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "IN"
                       const scanned = invoice.createdAt?.toDate?.()
                       return (
                         <tr key={invoice.id} className="border-t border-[#181818] text-sm transition hover:bg-[#111]">
-                          <td className="px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#1B1B1B] text-[10px] font-semibold text-[#AAA]">{initials}</span><span className="font-medium text-[#DDD]">{vendor}</span></div></td>
+                          <td className="px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#1B1B1B] text-[10px] font-semibold text-[#AAA]">{initials}</span><span className="font-medium text-[#DDD]">{customer}</span></div></td>
                           <td className="px-5 py-4 font-mono text-xs text-[#777]">{invoice.normalized?.invoiceNumber || "—"}</td>
                           <td className="px-5 py-4 text-xs text-[#777]">{scanned ? scanned.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) : "—"}</td>
                           <td className="px-5 py-4 text-right font-medium">{invoice.normalized?.total?.amount == null ? "—" : formatMoney(invoice.normalized.total.amount)}</td>
@@ -271,7 +282,7 @@ export default function Dashboard() {
                 <div className="mt-5 h-14"><ResponsiveContainer width="100%" height="100%"><AreaChart data={scanData}><defs><linearGradient id="scan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#86efac" stopOpacity={0.25}/><stop offset="1" stopColor="#86efac" stopOpacity={0}/></linearGradient></defs><Area dataKey="value" type="monotone" stroke="#86efac" strokeWidth={1.5} fill="url(#scan)" /></AreaChart></ResponsiveContainer></div>
               </div>
               <div className="rounded-2xl border border-white/[0.04] bg-[#0D0D0D] p-5">
-                <div className="flex items-center justify-between"><div><h2 className="text-base font-medium">Follow-ups</h2><p className="mt-1 text-xs text-[#666]">Vendor outreach</p></div><Send className="h-4 w-4 text-[#86efac]" /></div>
+                <div className="flex items-center justify-between"><div><h2 className="text-base font-medium">Follow-ups</h2><p className="mt-1 text-xs text-[#666]">Customer outreach</p></div><Send className="h-4 w-4 text-[#86efac]" /></div>
                 <div className="mt-5 space-y-3">
                   <Followup label="Payment reminders" company="Ready when invoices go overdue" time={`${metrics.overdueCount} overdue`} />
                   <Followup label="Review reminders" company="Invoices awaiting approval" time={`${metrics.needsReviewCount} pending`} />

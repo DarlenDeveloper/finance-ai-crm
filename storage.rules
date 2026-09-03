@@ -3,12 +3,20 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() { return request.auth != null; }
-    function membership(workspaceId) {
-      return firestore.get(/databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid));
+    function memberPath(workspaceId) {
+      return /databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
+    }
+    function isMember(workspaceId) {
+      return signedIn() && firestore.exists(memberPath(workspaceId));
+    }
+    function memberRole(workspaceId) {
+      return firestore.get(memberPath(workspaceId)).data.role;
+    }
+    function hasRole(workspaceId, roles) {
+      return isMember(workspaceId) && memberRole(workspaceId) in roles;
     }
     function canReview(workspaceId) {
-      return signedIn()
-        && membership(workspaceId).data.role in ['admin', 'reviewer'];
+      return hasRole(workspaceId, ['admin', 'reviewer']);
     }
     function supportedType() {
       return request.resource.contentType in [
@@ -17,7 +25,7 @@ service firebase.storage {
     }
 
     match /workspaces/{workspaceId}/invoices/{invoiceId}/source/{fileName} {
-      allow read: if signedIn() && membership(workspaceId).data.role in ['admin', 'reviewer', 'viewer'];
+      allow read: if hasRole(workspaceId, ['admin', 'reviewer', 'viewer']);
       allow create: if canReview(workspaceId)
         && request.resource.size < 20 * 1024 * 1024
         && supportedType();
@@ -25,7 +33,7 @@ service firebase.storage {
     }
 
     match /workspaces/{workspaceId}/invoices/{invoiceId}/previews/{fileName} {
-      allow read: if signedIn() && membership(workspaceId).data.role in ['admin', 'reviewer', 'viewer'];
+      allow read: if hasRole(workspaceId, ['admin', 'reviewer', 'viewer']);
       allow write: if false;
     }
 

@@ -6,6 +6,14 @@ export const moneySchema = z.object({
   currency: z.string().length(3).nullable(),
 })
 
+export const partySchema = z.object({
+  name: z.string().nullable(),
+  taxId: z.string().nullable(),
+  address: z.string().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+})
+
 export const lineItemSchema = z.object({
   description: z.string().nullable(),
   quantity: z.number().nullable(),
@@ -24,13 +32,12 @@ export const fieldEvidenceSchema = z.object({
 export const geminiInvoiceExtractionSchema = z.object({
   documentType: z.enum(["invoice", "credit_note", "receipt", "other"]),
   language: z.string().nullable(),
-  vendor: z.object({
-    name: z.string().nullable(),
-    taxId: z.string().nullable(),
-    address: z.string().nullable(),
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-  }),
+  // Issuer/seller ("us") and customer/buyer are modelled separately. `vendor`
+  // is retained for backward compatibility and mirrors the issuer.
+  vendor: partySchema,
+  issuer: partySchema,
+  customer: partySchema,
+  invoiceHandlerName: z.string().nullable(),
   invoiceNumber: z.string().nullable(),
   invoiceDate: z.string().nullable(),
   dueDate: z.string().nullable(),
@@ -39,6 +46,7 @@ export const geminiInvoiceExtractionSchema = z.object({
   subtotal: z.number().nullable(),
   taxAmount: z.number().nullable(),
   totalAmount: z.number().nullable(),
+  amountsTaxInclusive: z.boolean().nullable(),
   paymentTerms: z.string().nullable(),
   bankAccount: z.string().nullable(),
   lineItems: z.array(lineItemSchema).max(500),
@@ -51,9 +59,20 @@ export type GeminiInvoiceExtraction = z.infer<typeof geminiInvoiceExtractionSche
 export const normalizedInvoiceSchema = z.object({
   vendorId: z.string().nullable(),
   vendorName: z.string().min(1).nullable(),
+  issuerName: z.string().min(1).nullable(),
+  customerId: z.string().nullable(),
+  customerName: z.string().min(1).nullable(),
+  customerTaxId: z.string().min(1).nullable(),
+  customerEmail: z.string().min(1).nullable(),
+  customerPhone: z.string().min(1).nullable(),
+  handlerContactId: z.string().nullable(),
+  handlerName: z.string().min(1).nullable(),
+  handlerEmail: z.string().min(1).nullable(),
+  handlerPhone: z.string().min(1).nullable(),
   invoiceNumber: z.string().min(1).nullable(),
   invoiceDate: z.string().nullable(),
   dueDate: z.string().nullable(),
+  amountsTaxInclusive: z.boolean().nullable(),
   subtotal: moneySchema,
   tax: moneySchema,
   total: moneySchema,

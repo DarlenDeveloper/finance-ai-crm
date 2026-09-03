@@ -7,6 +7,7 @@ export type DuplicateCheck = {
 }
 
 type NormalizedLike = {
+  customerName?: string | null
   vendorName: string | null
   invoiceNumber: string | null
   invoiceDate: string | null
@@ -49,23 +50,23 @@ export async function findDuplicates(
     snap.forEach((doc) => record(doc.id, 1.0))
   }
 
-  // 2. Same normalized vendor + invoice number.
-  const vendorKey = normalizeVendor(normalized.vendorName)
-  if (vendorKey && normalized.invoiceNumber) {
+  // 2. Same normalized customer + invoice number.
+  const customerKey = normalizeVendor(normalized.customerName ?? normalized.vendorName)
+  if (customerKey && normalized.invoiceNumber) {
     const snap = await invoicesRef.where("normalized.invoiceNumber", "==", normalized.invoiceNumber).get()
     snap.forEach((doc) => {
       const other = doc.data()?.normalized
-      if (normalizeVendor(other?.vendorName ?? null) === vendorKey) record(doc.id, 0.9)
+      if (normalizeVendor(other?.customerName ?? other?.vendorName ?? null) === customerKey) record(doc.id, 0.9)
     })
   }
 
-  // 3. Same normalized vendor + total amount + invoice date.
-  if (vendorKey && normalized.total.amount != null && normalized.invoiceDate) {
+  // 3. Same normalized customer + total amount + invoice date.
+  if (customerKey && normalized.total.amount != null && normalized.invoiceDate) {
     const snap = await invoicesRef.where("normalized.invoiceDate", "==", normalized.invoiceDate).get()
     snap.forEach((doc) => {
       const other = doc.data()?.normalized
       if (
-        normalizeVendor(other?.vendorName ?? null) === vendorKey &&
+        normalizeVendor(other?.customerName ?? other?.vendorName ?? null) === customerKey &&
         other?.total?.amount === normalized.total.amount
       ) {
         record(doc.id, 0.75)
