@@ -232,7 +232,7 @@ export default function InvoicesPage() {
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }))
     const link = document.createElement("a")
     link.href = url
-    link.download = "ledger-ai-invoices.csv"
+    link.download = "mercury-invoices.csv"
     link.click()
     URL.revokeObjectURL(url)
   }

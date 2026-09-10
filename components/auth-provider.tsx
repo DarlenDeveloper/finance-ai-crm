@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }), [loading, user])
 
   if (loading || ((!isFirebaseConfigured || !user) && pathname !== "/login")) {
-    return <div className="grid min-h-screen place-items-center bg-black text-xs text-[#777]">Loading finance workspace…</div>
+    return <div className="grid min-h-screen place-items-center bg-black text-xs text-[#777]">Loading Mercury invoice workspace…</div>
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

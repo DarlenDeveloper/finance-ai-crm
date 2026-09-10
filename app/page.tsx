@@ -230,7 +230,7 @@ export default function Dashboard() {
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[#86efac]/[0.06] blur-3xl" />
                 <div className="flex items-center justify-between"><div className="grid h-9 w-9 place-items-center rounded-xl bg-[#86efac]/10 text-[#86efac]"><Sparkles className="h-4 w-4" /></div><span className="rounded-full border border-[#86efac]/20 px-2 py-1 text-[9px] uppercase tracking-widest text-[#86efac]">AI insight</span></div>
                 <h2 className="mt-5 text-xl font-medium tracking-tight">{duplicates.count > 0 ? `${duplicates.count} invoice${duplicates.count === 1 ? "" : "s"} may be duplicate${duplicates.count === 1 ? "" : "s"}.` : "No duplicate invoices detected."}</h2>
-                <p className="mt-2 text-sm leading-6 text-[#777]">{duplicates.count > 0 ? "Ledger AI matched invoice numbers, totals, and customer details across your scans." : "Ledger AI checks every extracted invoice against your workspace history."}</p>
+                <p className="mt-2 text-sm leading-6 text-[#777]">{duplicates.count > 0 ? "Mercury invoice checks matched invoice numbers, totals, and customer details across your scans." : "Mercury invoice checks compare every extracted invoice against your workspace history."}</p>
                 {duplicates.count > 0 && <div className="mt-5 rounded-xl border border-[#222] bg-[#111] p-4">
                   <div className="flex items-center justify-between"><span className="text-xs text-[#888]">Potential duplicate value</span><span className="text-sm font-medium">{formatMoney(duplicates.value)}</span></div>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#262626]"><div className="h-full rounded-full bg-[#86efac]" style={{ width: `${Math.round(duplicates.topScore * 100)}%` }} /></div>
@@ -291,7 +291,7 @@ export default function Dashboard() {
               </div>
             </section>
 
-            <div className="flex items-center justify-end gap-2 pt-2 text-[11px] text-[#555]"><span className="h-2 w-2 rounded-full bg-[#86efac]" />Ledger AI is online</div>
+            <div className="flex items-center justify-end gap-2 pt-2 text-[11px] text-[#555]"><span className="h-2 w-2 rounded-full bg-[#86efac]" />Mercury invoice assistant is online</div>
           </div>
         </main>
       </div>

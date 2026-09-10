@@ -10,7 +10,7 @@ export function FinancePageShell({ title, description, action, children }: { tit
           <Sidebar />
           <div className="mx-auto flex w-full max-w-[1500px] min-w-0 flex-1 flex-col gap-5 pb-8">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-              <div><p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[#666]">Finance workspace</p><h1 className="text-3xl font-medium tracking-[-0.04em] md:text-4xl">{title}</h1><p className="mt-2 text-sm text-[#777]">{description}</p></div>
+              <div><p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-[#666]">Mercury Computers Limited</p><h1 className="text-3xl font-medium tracking-[-0.04em] md:text-4xl">{title}</h1><p className="mt-2 text-sm text-[#777]">{description}</p></div>
               {action}
             </div>
             {children}

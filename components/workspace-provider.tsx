@@ -38,7 +38,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         const memberRef = doc(firebaseDb!, `workspaces/${workspaceId}/members/${user!.uid}`)
         const batch = writeBatch(firebaseDb!)
         batch.set(workspaceRef, {
-            name: "Finance Control",
+            name: "Mercury Computers Limited",
             defaultCurrency: "USD",
             timezone: "Africa/Kampala",
             createdAt: serverTimestamp(),
@@ -58,7 +58,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         if (active) {
           setWorkspaceName(null)
           setRole(null)
-          setError("Could not prepare your finance workspace.")
+          setError("Could not prepare the Mercury invoice workspace.")
         }
       } finally { if (active) setLoading(false) }
     }

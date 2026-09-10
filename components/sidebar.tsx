@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Icon, type IconName } from "@/components/icon"
+import { MercuryLogo } from "@/components/mercury-logo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/components/auth-provider"
 import { useWorkspace, type WorkspaceRole } from "@/components/workspace-provider"
@@ -43,13 +44,15 @@ export function Sidebar() {
   const displayName = user?.displayName?.trim() || nameFromEmail(user?.email)
   const email = user?.email || "No email address"
   const roleLabel = role ? roleLabels[role] : "Workspace member"
-  const currentWorkspaceName = workspaceName || "Finance workspace"
+  const currentWorkspaceName = workspaceName || "Mercury Computers Limited"
   return (
     <aside className="sticky top-24 hidden h-[calc(100vh-8rem)] w-64 shrink-0 flex-col overflow-y-auto rounded-2xl border border-white/[0.04] bg-[#0D0D0D] p-5 md:flex">
       <div className="mb-6 px-3">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[#5F5F5F]">Workspace</p>
         <div className="mt-3 flex items-center gap-3">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-[#86efac] text-sm font-bold text-black">{initials(currentWorkspaceName)}</div>
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white p-1 shadow-sm">
+            <MercuryLogo variant="mark" className="h-8 w-8" />
+          </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-white" title={currentWorkspaceName}>{currentWorkspaceName}</p>
             <p className="truncate text-xs text-[#6F6F6F]">{roleLabel}</p>
