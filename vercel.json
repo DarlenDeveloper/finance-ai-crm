@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/integrations/gmail/start",
+      "destination": "https://us-central1-ledger-ai-d1931.cloudfunctions.net/gmailOAuthStart"
+    },
+    {
+      "source": "/api/integrations/gmail/callback",
+      "destination": "https://us-central1-ledger-ai-d1931.cloudfunctions.net/gmailOAuthCallback"
+    },
+    {
+      "source": "/api/integrations/gmail/status",
+      "destination": "https://us-central1-ledger-ai-d1931.cloudfunctions.net/gmailOAuthStatus"
+    },
+    {
+      "source": "/api/integrations/gmail/disconnect",
+      "destination": "https://us-central1-ledger-ai-d1931.cloudfunctions.net/gmailOAuthDisconnect"
+    }
+  ]
+}

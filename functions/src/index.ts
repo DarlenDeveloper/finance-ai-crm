@@ -11,6 +11,7 @@ import { findDuplicates } from "./duplicates.js"
 import { changedFields as computeChangedFields, normalize, validate } from "./normalization.js"
 import { transitionPayment, type PaymentStatus } from "./payment.js"
 import type { Extraction } from "./schema.js"
+export { gmailOAuthStart, gmailOAuthCallback, gmailOAuthStatus, gmailOAuthDisconnect } from "./gmail.js"
 
 initializeApp()
 

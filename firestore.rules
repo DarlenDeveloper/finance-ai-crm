@@ -57,6 +57,13 @@ service cloud.firestore {
         allow delete: if canReview(workspaceId);
       }
 
+      // Integration credentials are server-only. Client apps use authenticated
+      // API routes that expose connection metadata without token material.
+      match /integrations/{integrationId} {
+        allow read, write: if false;
+        match /events/{eventId} { allow read, write: if false; }
+      }
+
       match /invoices/{invoiceId} {
         allow read: if isMember(workspaceId);
         allow create: if canReview(workspaceId)
