@@ -19,6 +19,16 @@ export const metadata: Metadata = {
   description: 'Secure invoice review, payment tracking, and customer follow-ups for Mercury Computers Limited',
   applicationName: 'Mercury Invoice CRM',
   generator: 'Next.js',
+  // Private internal tool — keep it out of all search engine indexes.
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   icons: {
     icon: '/mercury-mark.png',
     apple: '/mercury-mark.png',
