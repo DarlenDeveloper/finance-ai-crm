@@ -56,4 +56,3 @@ export default function LoginPage() {
     </div></section>
   </main>
 }
-
