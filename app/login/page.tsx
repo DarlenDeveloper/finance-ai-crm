@@ -20,6 +20,8 @@ function friendlyError(error: unknown) {
   if (code.includes("email-already-in-use")) return "An account already exists for this email."
   if (code.includes("weak-password")) return "Use a password with at least six characters."
   if (code.includes("invalid-email")) return "Enter a valid email address."
+  if (code.includes("unauthorized-domain")) return "This browser address is not authorized in Firebase Authentication. Add this host to Firebase authorized domains."
+  if (code.includes("network-request-failed")) return "Could not reach Firebase Authentication. Check the network connection and try again."
   return "Authentication failed. Please try again."
 }
 

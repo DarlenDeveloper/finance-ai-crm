@@ -3,20 +3,37 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() { return request.auth != null; }
+    function canonicalWorkspace(workspaceId) {
+      return workspaceId == 'ws_Vv8hNHNb11TIlHTkkhmgBW6us502';
+    }
     function memberPath(workspaceId) {
       return /databases/(default)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
     }
-    function isMember(workspaceId) {
-      return signedIn() && firestore.exists(memberPath(workspaceId));
+    function isActiveMember(workspaceId) {
+      return canonicalWorkspace(workspaceId)
+        && signedIn()
+        && firestore.exists(memberPath(workspaceId))
+        && firestore.get(memberPath(workspaceId)).data.status == 'active';
     }
     function memberRole(workspaceId) {
       return firestore.get(memberPath(workspaceId)).data.role;
     }
-    function hasRole(workspaceId, roles) {
-      return isMember(workspaceId) && memberRole(workspaceId) in roles;
+    function isSuperAdmin(workspaceId) {
+      return isActiveMember(workspaceId)
+        && request.auth.uid == 'Vv8hNHNb11TIlHTkkhmgBW6us502'
+        && memberRole(workspaceId) == 'super_admin';
     }
-    function canReview(workspaceId) {
-      return hasRole(workspaceId, ['admin', 'reviewer']);
+    function hasInvoicePage(workspaceId) {
+      return isActiveMember(workspaceId)
+        && (isSuperAdmin(workspaceId)
+          || firestore.get(memberPath(workspaceId)).data.pageAccess.hasAny([
+            'overview', 'invoices', 'review', 'analytics',
+            'sales-performance', 'follow-ups'
+          ]));
+    }
+    function canOperate(workspaceId) {
+      return isActiveMember(workspaceId)
+        && memberRole(workspaceId) in ['super_admin', 'admin', 'developer'];
     }
     function supportedType() {
       return request.resource.contentType in [
@@ -25,15 +42,16 @@ service firebase.storage {
     }
 
     match /workspaces/{workspaceId}/invoices/{invoiceId}/source/{fileName} {
-      allow read: if hasRole(workspaceId, ['admin', 'reviewer', 'viewer']);
-      allow create: if canReview(workspaceId)
+      allow read: if hasInvoicePage(workspaceId);
+      allow create: if canOperate(workspaceId)
+        && hasInvoicePage(workspaceId)
         && request.resource.size < 20 * 1024 * 1024
         && supportedType();
       allow update, delete: if false;
     }
 
     match /workspaces/{workspaceId}/invoices/{invoiceId}/previews/{fileName} {
-      allow read: if hasRole(workspaceId, ['admin', 'reviewer', 'viewer']);
+      allow read: if hasInvoicePage(workspaceId);
       allow write: if false;
     }
 

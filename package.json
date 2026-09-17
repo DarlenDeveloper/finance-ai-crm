@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
+    "test:rbac": "node --experimental-strip-types --test tests/rbac.test.mjs",
     "start": "next start"
   },
   "dependencies": {

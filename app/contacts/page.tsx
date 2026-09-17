@@ -118,7 +118,7 @@ export default function ContactsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const canWrite = role === "admin" || role === "reviewer"
+  const canWrite = role === "super_admin" || role === "admin" || role === "developer"
 
   // Resolve the caller's workspace role so the UI matches Firestore rules.
   useEffect(() => {

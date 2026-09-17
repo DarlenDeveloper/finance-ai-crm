@@ -16,10 +16,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!firebaseAuth) { setLoading(false); return }
-    return onAuthStateChanged(firebaseAuth, (nextUser) => {
+
+    let settled = false
+    const timeout = window.setTimeout(() => {
+      if (settled) return
+      console.error("Firebase authentication state timed out during initialization.")
+      setLoading(false)
+    }, 8000)
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
+      settled = true
+      window.clearTimeout(timeout)
       setUser(nextUser)
       setLoading(false)
+    }, (error) => {
+      settled = true
+      window.clearTimeout(timeout)
+      console.error("Firebase authentication state failed", error)
+      setUser(null)
+      setLoading(false)
     })
+
+    return () => {
+      settled = true
+      window.clearTimeout(timeout)
+      unsubscribe()
+    }
   }, [])
 
   useEffect(() => {

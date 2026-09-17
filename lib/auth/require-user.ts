@@ -1,8 +1,9 @@
 import "server-only"
 
 import { adminAuth, adminDb } from "@/lib/firebase/admin"
+import { ORGANIZATION_WORKSPACE_ID, type WorkspaceRole } from "@/lib/rbac"
 
-export type WorkspaceRole = "admin" | "reviewer" | "viewer"
+export type { WorkspaceRole }
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) {
@@ -22,13 +23,15 @@ export async function requireUser(request: Request) {
 }
 
 export async function requireWorkspaceRole(request: Request, workspaceId: string, roles: WorkspaceRole[]) {
+  if (workspaceId !== ORGANIZATION_WORKSPACE_ID) throw new ApiError(403, "WORKSPACE_FORBIDDEN", "This organisation workspace is not available.")
   const user = await requireUser(request)
   const member = await adminDb.doc(`workspaces/${workspaceId}/members/${user.uid}`).get()
-  const role = member.data()?.role as WorkspaceRole | undefined
-  if (!member.exists || !role || !roles.includes(role)) {
+  const data = member.data()
+  const role = data?.role as WorkspaceRole | undefined
+  if (!member.exists || data?.status !== "active" || !role || !roles.includes(role)) {
     throw new ApiError(403, "WORKSPACE_FORBIDDEN", "You do not have permission for this workspace.")
   }
-  return { user, role }
+  return { user, role, member: data }
 }
 
 export function apiErrorResponse(error: unknown) {

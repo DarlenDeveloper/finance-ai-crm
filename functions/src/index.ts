@@ -19,6 +19,14 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY")
 const geminiModel = "gemini-3.1-pro-preview"
 const supportedTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"])
 const maxBytes = 20 * 1024 * 1024
+const organizationWorkspaceId = "ws_Vv8hNHNb11TIlHTkkhmgBW6us502"
+const workspaceIdField = z.literal(organizationWorkspaceId)
+
+function canOperateMember(data: FirebaseFirestore.DocumentData | undefined, uid: string, page: "review" | "invoices") {
+  if (!data || data.status !== "active") return false
+  const roleAllowed = data.role === "admin" || data.role === "developer" || (data.role === "super_admin" && uid === "Vv8hNHNb11TIlHTkkhmgBW6us502")
+  return roleAllowed && (data.role === "super_admin" || (Array.isArray(data.pageAccess) && data.pageAccess.includes(page)))
+}
 
 export const processInvoice = onDocumentUpdated({
   document: "workspaces/{workspaceId}/invoices/{invoiceId}",
@@ -174,7 +182,7 @@ const normalizedInput = z
   )
 
 const reviewInput = z.object({
-  workspaceId: z.string().min(1),
+  workspaceId: workspaceIdField,
   invoiceId: z.string().min(1),
   action: z.enum(["approve", "reject", "retry"]),
   // ISO timestamp of the invoice the reviewer was looking at; guards against
@@ -208,7 +216,7 @@ export const reviewInvoice = onCall({
     const customerRef = db.doc(`workspaces/${workspaceId}/contacts/${normalized.customerId}`)
     const handlerRef = db.doc(`workspaces/${workspaceId}/contacts/${normalized.handlerContactId}`)
     const [member, customerContact, handlerContact] = await Promise.all([memberRef.get(), customerRef.get(), handlerRef.get()])
-    if (!member.exists || !["admin", "reviewer"].includes(member.data()?.role)) {
+    if (!member.exists || !canOperateMember(member.data(), request.auth.uid, "review")) {
       throw new HttpsError("permission-denied", "You cannot review invoices in this workspace.")
     }
     if (!customerContact.exists || customerContact.data()?.type !== "customer") {
@@ -236,8 +244,7 @@ export const reviewInvoice = onCall({
 
   await db.runTransaction(async (transaction) => {
     const [member, invoice] = await Promise.all([transaction.get(memberRef), transaction.get(invoiceRef)])
-    const role = member.data()?.role
-    if (!member.exists || !["admin", "reviewer"].includes(role)) throw new HttpsError("permission-denied", "You cannot review invoices in this workspace.")
+    if (!member.exists || !canOperateMember(member.data(), request.auth!.uid, "review")) throw new HttpsError("permission-denied", "You cannot review invoices in this workspace.")
     if (!invoice.exists) throw new HttpsError("not-found", "Invoice was not found.")
     const data = invoice.data()!
     const status = data.status
@@ -294,7 +301,7 @@ export const reviewInvoice = onCall({
 
 
 const paymentInput = z.object({
-  workspaceId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
+  workspaceId: workspaceIdField,
   invoiceId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
   status: z.enum(["paid", "unpaid"]),
 })
@@ -319,8 +326,7 @@ export const setInvoicePaymentStatus = onCall({
 
   const changed = await db.runTransaction(async (transaction) => {
     const [member, invoice] = await Promise.all([transaction.get(memberRef), transaction.get(invoiceRef)])
-    const role = member.data()?.role
-    if (!member.exists || !["admin", "reviewer"].includes(role)) {
+    if (!member.exists || !canOperateMember(member.data(), request.auth!.uid, "invoices")) {
       throw new HttpsError("permission-denied", "You cannot update payments in this workspace.")
     }
     if (!invoice.exists) throw new HttpsError("not-found", "Invoice was not found.")
@@ -350,7 +356,7 @@ export const setInvoicePaymentStatus = onCall({
 })
 
 const deleteInvoiceInput = z.object({
-  workspaceId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
+  workspaceId: workspaceIdField,
   invoiceId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
 })
 
@@ -372,8 +378,7 @@ export const deleteInvoice = onCall({
 
   const storagePath = await db.runTransaction(async (transaction) => {
     const [member, invoice] = await Promise.all([transaction.get(memberRef), transaction.get(invoiceRef)])
-    const role = member.data()?.role
-    if (!member.exists || !["admin", "reviewer"].includes(role)) {
+    if (!member.exists || !canOperateMember(member.data(), request.auth!.uid, "invoices")) {
       throw new HttpsError("permission-denied", "You cannot delete invoices in this workspace.")
     }
     if (!invoice.exists) throw new HttpsError("not-found", "Invoice was not found.")

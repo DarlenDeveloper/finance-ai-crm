@@ -60,7 +60,7 @@ export default function IntegrationsPage() {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [queryText, setQueryText] = useState("")
-  const canManage = role === "admin"
+  const canManage = role === "super_admin" || role === "admin"
 
   async function authorizationHeaders() {
     if (!user) throw new Error("Sign in again to manage integrations.")

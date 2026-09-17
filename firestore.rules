@@ -3,29 +3,133 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function canonicalWorkspace(workspaceId) {
+      return workspaceId == 'ws_Vv8hNHNb11TIlHTkkhmgBW6us502';
+    }
+    function fixedSuperAdmin() {
+      return signedIn() && request.auth.uid == 'Vv8hNHNb11TIlHTkkhmgBW6us502';
+    }
     function memberPath(workspaceId) {
       return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(request.auth.uid);
     }
-    function isMember(workspaceId) { return signedIn() && exists(memberPath(workspaceId)); }
-    function role(workspaceId) { return get(memberPath(workspaceId)).data.role; }
-    function canReview(workspaceId) {
-      return isMember(workspaceId) && role(workspaceId) in ['admin', 'reviewer'];
+    function memberData(workspaceId) { return get(memberPath(workspaceId)).data; }
+    function isActiveMember(workspaceId) {
+      return canonicalWorkspace(workspaceId)
+        && signedIn()
+        && exists(memberPath(workspaceId))
+        && memberData(workspaceId).status == 'active'
+        && memberData(workspaceId).role in ['super_admin', 'admin', 'developer', 'user'];
     }
-    function isAdmin(workspaceId) { return isMember(workspaceId) && role(workspaceId) == 'admin'; }
+    function isSuperAdmin(workspaceId) {
+      return fixedSuperAdmin()
+        && isActiveMember(workspaceId)
+        && memberData(workspaceId).role == 'super_admin';
+    }
+    function isAdmin(workspaceId) {
+      return isActiveMember(workspaceId)
+        && memberData(workspaceId).role == 'admin';
+    }
+    function canManageAccess(workspaceId) {
+      return isSuperAdmin(workspaceId) || isAdmin(workspaceId);
+    }
+    // An admin may manage a target member only when the target is not the fixed
+    // super admin, the target's existing role is a non-privileged role (or the
+    // doc does not yet exist / is a pending request), and the resulting role is
+    // limited to developer/user. This prevents an admin from creating or editing
+    // other admins or the super admin, or promoting anyone to admin.
+    function adminManageableRole(role) {
+      return role == null || role == 'developer' || role == 'user';
+    }
+    function adminCanWriteMember(workspaceId, userId, newData) {
+      return isAdmin(workspaceId)
+        && userId != 'Vv8hNHNb11TIlHTkkhmgBW6us502'
+        && userId != request.auth.uid
+        && (!exists(memberPath(workspaceId)) || adminManageableRole(resource.data.role))
+        && adminManageableRole(newData.role)
+        && (newData.status != 'pending'
+          ? (newData.role == 'developer' || newData.role == 'user')
+          : newData.role == null);
+    }
+    function hasPage(workspaceId, pages) {
+      return isActiveMember(workspaceId)
+        && (isSuperAdmin(workspaceId) || memberData(workspaceId).pageAccess.hasAny(pages));
+    }
+    function canOperate(workspaceId) {
+      return isActiveMember(workspaceId)
+        && memberData(workspaceId).role in ['super_admin', 'admin', 'developer'];
+    }
+    function validPageAccess(access) {
+      return access is list
+        && access.size() <= 11
+        && access.hasOnly([
+          'overview', 'invoices', 'review', 'analytics', 'sales-performance',
+          'follow-ups', 'contacts', 'integrations', 'settings',
+          'access-management', 'system-logs'
+        ]);
+    }
+    function validMember(data, userId) {
+      return data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'role', 'status', 'pageAccess',
+          'requestedAt', 'joinedAt', 'approvedAt', 'approvedBy',
+          'updatedAt', 'updatedBy'
+        ])
+        && data.uid == userId
+        && data.email is string
+        && data.email.size() <= 320
+        && data.displayName is string
+        && data.displayName.size() <= 200
+        && data.status in ['pending', 'active', 'disabled']
+        && validPageAccess(data.pageAccess)
+        && (
+          (data.status == 'pending' && data.role == null && data.pageAccess.size() == 0)
+          || (data.status in ['active', 'disabled'] && data.role in ['super_admin', 'admin', 'developer', 'user'])
+        )
+        && (userId != 'Vv8hNHNb11TIlHTkkhmgBW6us502'
+          || (data.role == 'super_admin' && data.status == 'active'
+            && data.pageAccess.hasAll([
+              'overview', 'invoices', 'review', 'analytics', 'sales-performance',
+              'follow-ups', 'contacts', 'integrations', 'settings',
+              'access-management', 'system-logs'
+            ])));
+    }
+    function validPendingSelfRegistration(data, userId) {
+      return userId == request.auth.uid
+        && validMember(data, userId)
+        && data.status == 'pending'
+        && data.role == null
+        && data.pageAccess.size() == 0
+        && data.updatedBy == request.auth.uid
+        && data.email == request.auth.token.email;
+    }
+    function canReadInvoices(workspaceId) {
+      return hasPage(workspaceId, [
+        'overview', 'invoices', 'review', 'analytics',
+        'sales-performance', 'follow-ups'
+      ]);
+    }
 
     match /workspaces/{workspaceId} {
-      allow read: if isMember(workspaceId);
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isAdmin(workspaceId);
+      allow read: if isActiveMember(workspaceId);
+      allow create, update: if canonicalWorkspace(workspaceId)
+        && fixedSuperAdmin()
+        && request.resource.data.createdBy == 'Vv8hNHNb11TIlHTkkhmgBW6us502';
+      allow delete: if false;
 
       match /members/{userId} {
-        allow read: if isMember(workspaceId);
-        allow create: if isAdmin(workspaceId)
-          || (signedIn()
-            && userId == request.auth.uid
-            && request.resource.data.role == 'admin'
-            && getAfter(/databases/$(database)/documents/workspaces/$(workspaceId)).data.createdBy == request.auth.uid);
-        allow update, delete: if isAdmin(workspaceId);
+        allow get: if canonicalWorkspace(workspaceId)
+          && signedIn()
+          && (userId == request.auth.uid || canManageAccess(workspaceId));
+        allow list: if canonicalWorkspace(workspaceId) && canManageAccess(workspaceId);
+        allow create: if canonicalWorkspace(workspaceId)
+          && ((fixedSuperAdmin() && validMember(request.resource.data, userId))
+            || validPendingSelfRegistration(request.resource.data, userId));
+        allow update: if canonicalWorkspace(workspaceId)
+          && validMember(request.resource.data, userId)
+          && (fixedSuperAdmin()
+            || adminCanWriteMember(workspaceId, userId, request.resource.data));
+        allow delete: if canonicalWorkspace(workspaceId)
+          && fixedSuperAdmin()
+          && userId != 'Vv8hNHNb11TIlHTkkhmgBW6us502';
       }
 
       match /contacts/{contactId} {
@@ -42,37 +146,34 @@ service cloud.firestore {
             && (data.phone == null || data.phone is string)
             && (data.notes == null || data.notes is string);
         }
-        // Any workspace member can read contacts.
-        allow read: if isMember(workspaceId);
-        // Admin or reviewer can create, ownership stamped to the caller.
-        allow create: if canReview(workspaceId)
+        allow read: if hasPage(workspaceId, ['contacts', 'review']);
+        allow create: if canOperate(workspaceId)
+          && hasPage(workspaceId, ['contacts', 'review'])
           && request.resource.data.createdBy == request.auth.uid
           && validContact(request.resource.data);
-        // Admin or reviewer can update; workspaceId and createdBy are immutable.
-        allow update: if canReview(workspaceId)
+        allow update: if canOperate(workspaceId)
+          && hasPage(workspaceId, ['contacts', 'review'])
           && validContact(request.resource.data)
           && request.resource.data.createdBy == resource.data.createdBy
           && request.resource.data.workspaceId == resource.data.workspaceId;
-        // Admin or reviewer can delete.
-        allow delete: if canReview(workspaceId);
+        allow delete: if canOperate(workspaceId) && hasPage(workspaceId, ['contacts']);
       }
 
-      // Integration credentials are server-only. Client apps use authenticated
-      // API routes that expose connection metadata without token material.
       match /integrations/{integrationId} {
         allow read, write: if false;
         match /events/{eventId} { allow read, write: if false; }
       }
 
       match /invoices/{invoiceId} {
-        allow read: if isMember(workspaceId);
-        allow create: if canReview(workspaceId)
+        allow read: if canReadInvoices(workspaceId);
+        allow create: if canOperate(workspaceId)
+          && hasPage(workspaceId, ['invoices', 'review'])
           && request.resource.data.createdBy == request.auth.uid
           && request.resource.data.workspaceId == workspaceId
           && request.resource.data.status == 'uploading'
           && !request.resource.data.keys().hasAny(['extracted', 'normalized', 'duplicateCheck', 'review']);
-        // Client may only finalize or fail its own upload. AI/review fields remain unchanged.
-        allow update: if canReview(workspaceId)
+        allow update: if canOperate(workspaceId)
+          && hasPage(workspaceId, ['invoices', 'review'])
           && resource.data.createdBy == request.auth.uid
           && resource.data.status == 'uploading'
           && request.resource.data.status in ['uploaded', 'failed']
@@ -82,7 +183,7 @@ service cloud.firestore {
         allow delete: if false;
 
         match /events/{eventId} {
-          allow read: if isMember(workspaceId);
+          allow read: if canReadInvoices(workspaceId);
           allow write: if false;
         }
       }

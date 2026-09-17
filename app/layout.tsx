@@ -6,6 +6,7 @@ import { DemoStoreProvider } from '@/lib/demo-store'
 import { AuthProvider } from '@/components/auth-provider'
 import { WorkspaceProvider } from '@/components/workspace-provider'
 import { ThemeProvider } from '@/components/theme-provider'
+import { RbacGate } from '@/components/rbac-gate'
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -44,7 +45,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={poppins.variable}>
       <body className="antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          <AuthProvider><WorkspaceProvider><DemoStoreProvider>{children}</DemoStoreProvider></WorkspaceProvider></AuthProvider>
+          <AuthProvider><WorkspaceProvider><RbacGate><DemoStoreProvider>{children}</DemoStoreProvider></RbacGate></WorkspaceProvider></AuthProvider>
         </ThemeProvider>
         <Analytics />
       </body>

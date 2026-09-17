@@ -26,7 +26,8 @@ const functionOptions = {
   secrets,
 }
 
-type Role = "admin" | "reviewer" | "viewer"
+const organizationWorkspaceId = "ws_Vv8hNHNb11TIlHTkkhmgBW6us502"
+type Role = "super_admin" | "admin" | "developer" | "user"
 type OAuthState = { workspaceId: string; userId: string; nonce: string; exp: number }
 type EncryptedToken = { algorithm: "A256GCM"; keyVersion: 1; iv: string; ciphertext: string; tag: string }
 type GoogleTokenResponse = { access_token?: string; refresh_token?: string; scope?: string; error?: string; error_description?: string }
@@ -137,13 +138,19 @@ function decryptToken(value: EncryptedToken) {
 }
 
 async function workspaceUser(request: Request, workspaceId: string, roles: Role[]) {
+  if (workspaceId !== organizationWorkspaceId) throw new HttpError(403, "WORKSPACE_FORBIDDEN", "This organisation workspace is not available.")
   const authorization = request.get("authorization") || ""
   if (!authorization.startsWith("Bearer ")) throw new HttpError(401, "AUTH_REQUIRED", "Authentication is required.")
   let user
   try { user = await getAuth().verifyIdToken(authorization.slice(7)) } catch { throw new HttpError(401, "AUTH_REQUIRED", "Authentication session is invalid or expired.") }
   const member = await getFirestore().doc(`workspaces/${workspaceId}/members/${user.uid}`).get()
-  const role = member.data()?.role as Role | undefined
-  if (!member.exists || !role || !roles.includes(role)) throw new HttpError(403, "WORKSPACE_FORBIDDEN", "You do not have permission for this workspace.")
+  const data = member.data()
+  const role = data?.role as Role | undefined
+  const validSuperAdmin = role !== "super_admin" || user.uid === "Vv8hNHNb11TIlHTkkhmgBW6us502"
+  const hasPage = role === "super_admin" || (Array.isArray(data?.pageAccess) && data.pageAccess.includes("integrations"))
+  if (!member.exists || data?.status !== "active" || !role || !roles.includes(role) || !validSuperAdmin || !hasPage) {
+    throw new HttpError(403, "WORKSPACE_FORBIDDEN", "You do not have permission for this workspace.")
+  }
   return { user, role }
 }
 
@@ -175,7 +182,7 @@ export const gmailOAuthStart = onRequest(functionOptions, async (request, respon
   }
   try {
     const workspaceId = workspaceIdFrom(request.body?.workspaceId)
-    const { user } = await workspaceUser(request, workspaceId, ["admin"])
+    const { user } = await workspaceUser(request, workspaceId, ["super_admin", "admin"])
     config()
     const nonce = randomBytes(32).toString("base64url")
     const pkce = createPkce()
@@ -206,8 +213,13 @@ export const gmailOAuthCallback = onRequest(functionOptions, async (request, res
     if (!code || !stateValue || !nonce || !verifier) throw new Error("Incomplete OAuth callback")
     const state = verifyState(stateValue)
     if (state.nonce !== nonce) throw new Error("OAuth state cookie mismatch")
+    if (state.workspaceId !== organizationWorkspaceId) throw new Error("Invalid organisation workspace")
     const member = await getFirestore().doc(`workspaces/${state.workspaceId}/members/${state.userId}`).get()
-    if (!member.exists || member.data()?.role !== "admin") throw new Error("Workspace admin access is required")
+    const memberData = member.data()
+    const memberRole = memberData?.role as Role | undefined
+    const validAdmin = memberRole === "admin" || (memberRole === "super_admin" && state.userId === "Vv8hNHNb11TIlHTkkhmgBW6us502")
+    const hasIntegrationAccess = memberRole === "super_admin" || (Array.isArray(memberData?.pageAccess) && memberData.pageAccess.includes("integrations"))
+    if (!member.exists || memberData?.status !== "active" || !validAdmin || !hasIntegrationAccess) throw new Error("Workspace admin access is required")
     const token = await exchangeCode(code, verifier, callbackUri(request))
     if (!token.refresh_token) throw new Error("Google did not return an offline refresh token")
     if (!new Set((token.scope || "").split(/\s+/)).has("https://www.googleapis.com/auth/gmail.send")) throw new Error("Gmail send permission was not granted")
@@ -231,7 +243,7 @@ export const gmailOAuthStatus = onRequest(functionOptions, async (request, respo
   }
   try {
     const workspaceId = workspaceIdFrom(request.query.workspaceId)
-    await workspaceUser(request, workspaceId, ["admin", "reviewer", "viewer"])
+    await workspaceUser(request, workspaceId, ["super_admin", "admin", "developer", "user"])
     config()
     const snapshot = await getFirestore().doc(`workspaces/${workspaceId}/integrations/gmail`).get()
     const data = snapshot.data()
@@ -249,7 +261,7 @@ export const gmailOAuthDisconnect = onRequest(functionOptions, async (request, r
   }
   try {
     const workspaceId = workspaceIdFrom(request.body?.workspaceId)
-    const { user } = await workspaceUser(request, workspaceId, ["admin"])
+    const { user } = await workspaceUser(request, workspaceId, ["super_admin", "admin"])
     const ref = getFirestore().doc(`workspaces/${workspaceId}/integrations/gmail`)
     const snapshot = await ref.get()
     if (!snapshot.exists || snapshot.data()?.status !== "connected") {
